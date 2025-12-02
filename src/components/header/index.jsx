@@ -13,7 +13,6 @@ function Header() {
                     <ul className="nav nav-pills">
                         <li className="nav-item"><a href="#" className="nav-link active" aria-current="page">Pontos Turísticos</a></li>
                         <li className="nav-item"><a href="#" className="nav-link">Cadastrar Locais</a></li>
-                        <li className="nav-item"><a href="#" className="nav-link">Contato</a></li>
                         <li className="nav-item"><a href="#" className="nav-link">Sobre</a></li>
                     </ul>
                 </header>

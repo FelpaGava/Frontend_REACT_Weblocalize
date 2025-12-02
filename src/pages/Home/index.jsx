@@ -1,5 +1,9 @@
 import api from '../../service/Api';
 import React, { useState, useEffect } from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faPen } from '@fortawesome/free-solid-svg-icons';
+
 
 function Home() {
 
@@ -47,7 +51,6 @@ function Home() {
         return estado ? (estado.ufsigla || estado.UFSIGLA) : '-';
     };
 
-
     if (isLoading) {
         return (
             <div className="d-flex justify-content-center align-items-center" style={{ height: '50vh' }}>
@@ -75,7 +78,7 @@ function Home() {
                                     <th scope="col">Nome</th>
                                     <th scope="col">Descrição</th>
                                     <th scope="col">Endereço</th>
-                                    <th scope="col">Localização (Cidade/UF)</th>
+                                    <th scope="col">Cidade/UF</th>
                                     <th scope="col" className="text-end pe-4">Ações</th>
                                 </tr>
                             </thead>
@@ -86,30 +89,30 @@ function Home() {
                                             <td className="ps-4 fw-bold text-muted">
                                                 {item.locid || item.LOCID}
                                             </td>
-                                            
+
                                             <td>
                                                 {item.locnome || item.LOCNOME}
                                             </td>
-                                            
+
                                             <td title={item.locdescricao || item.LOCDESCRICAO}>
-                                                {(item.locdescricao || item.LOCDESCRICAO || '').length > 30 
-                                                    ? (item.locdescricao || item.LOCDESCRICAO).substring(0, 30) + '...' 
+                                                {(item.locdescricao || item.LOCDESCRICAO || '').length > 30
+                                                    ? (item.locdescricao || item.LOCDESCRICAO).substring(0, 30) + '...'
                                                     : (item.locdescricao || item.LOCDESCRICAO)}
                                             </td>
-                                            
+
                                             <td>{item.locendereco || item.LOCENDERECO}</td>
-                                            
+
                                             <td>
                                                 <span className="badge bg-info text-dark">
-                                                    {getNomeCidade(item.loccid || item.LOCCID)} 
-                                                    {' - '} 
+                                                    {getNomeCidade(item.loccid || item.LOCCID)}
+                                                    {' - '}
                                                     {getSiglaEstado(item.locuf || item.LOCUF)}
                                                 </span>
                                             </td>
 
                                             <td className="text-end pe-4">
-                                                <button className="btn btn-sm btn-outline-primary me-2">Editar</button>
-                                                <button className="btn btn-sm btn-outline-danger">Excluir</button>
+                                                <button className="btn btn-sm btn-outline-primary me-2" title="Editar"><FontAwesomeIcon icon={faPen} /></button>
+                                                <button className="btn btn-sm btn-outline-danger" title="Excluir"><FontAwesomeIcon icon={faTrash} /></button>
                                             </td>
                                         </tr>
                                     ))
