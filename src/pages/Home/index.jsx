@@ -125,7 +125,7 @@ function Home() {
                                                 {item.locid || item.LOCID}
                                             </td>
                                             
-                                            <td className="fw-semibold text-primary">
+                                            <td className="fw-semibold text-primary fw-bold">
                                                 {item.locnome || item.LOCNOME}
                                             </td>
                                             
