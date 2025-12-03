@@ -1,5 +1,3 @@
-import React from 'react';
-
 function Header() {
     return (
         <div className="header-container">
@@ -11,9 +9,8 @@ function Header() {
                     </a>
 
                     <ul className="nav nav-pills">
-                        <li className="nav-item"><a href="#" className="nav-link active" aria-current="page">Pontos Turísticos</a></li>
-                        <li className="nav-item"><a href="#" className="nav-link">Cadastrar Locais</a></li>
-                        <li className="nav-item"><a href="#" className="nav-link">Sobre</a></li>
+                        <li className="nav-item"><a href="#" className="nav-link active fw-bold" aria-current="page">Pontos Turísticos</a></li>
+                        <li className="nav-item"><a href="#" className="nav-link fw-bold">Sobre</a></li>
                     </ul>
                 </header>
             </div>

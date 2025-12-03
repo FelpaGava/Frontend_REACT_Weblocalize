@@ -1,59 +1,84 @@
-import api from '../../service/Api';
+import api from '../../service/Api'; // Verifique se é 'Api' ou 'api' conforme sua pasta
 import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTrash } from '@fortawesome/free-solid-svg-icons';
-import { faPen } from '@fortawesome/free-solid-svg-icons';
+import { faTrash, faPen, faPlus } from '@fortawesome/free-solid-svg-icons';
 
+// CORREÇÃO 1: Importar com Letra Maiúscula
+import AddLocations from '../../components/forms/addLocations'; 
 
 function Home() {
 
+    // --- ESTADOS ---
     const [listaLocais, setListaLocais] = useState([]);
     const [listaCidades, setListaCidades] = useState([]);
     const [listaEstados, setListaEstados] = useState([]);
+    
+    // Controle de UI
     const [isLoading, setIsLoading] = useState(true);
+    const [showModal, setShowModal] = useState(false);
 
+    // --- EFEITOS (LIFECYCLE) ---
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const [resLocais, resCidades, resEstados] = await Promise.all([
-                    api.get('Local'),
-                    api.get('Cidade'),
-                    api.get('Estado')
-                ]);
-
-                const dadosLocais = resLocais.data.$values || resLocais.data;
-                const dadosCidades = resCidades.data.$values || resCidades.data;
-                const dadosEstados = resEstados.data.$values || resEstados.data;
-
-                setListaLocais(dadosLocais);
-                setListaCidades(dadosCidades);
-                setListaEstados(dadosEstados);
-
-            } catch (error) {
-                console.error('Erro ao buscar os dados:', error);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        fetchData();
+        carregarDados();
     }, []);
 
-    const getNomeCidade = (idCidade) => {
-        if (!listaCidades.length || !idCidade) return '...';
-        const cidade = listaCidades.find(c => c.cidid === idCidade || c.CIDID === idCidade);
-        return cidade ? (cidade.cidnome || cidade.CIDNOME) : 'Não encontrada';
+    // --- FUNÇÕES AUXILIARES ---
+
+    const carregarDados = async () => {
+        try {
+            // Promise.all para requisições paralelas (Performance)
+            const [resLocais, resCidades, resEstados] = await Promise.all([
+                api.get('Local'),
+                api.get('Cidade'),
+                api.get('Estado')
+            ]);
+
+            // Normalização de dados do .NET ($values)
+            const dadosLocais = resLocais.data.$values || resLocais.data;
+            const dadosCidades = resCidades.data.$values || resCidades.data;
+            const dadosEstados = resEstados.data.$values || resEstados.data;
+
+            setListaLocais(dadosLocais);
+            setListaCidades(dadosCidades);
+            setListaEstados(dadosEstados);
+        } catch (error) {
+            console.error('Erro ao buscar dados:', error);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
-    const getSiglaEstado = (idEstado) => {
-        if (!listaEstados.length || !idEstado) return '-';
-        const estado = listaEstados.find(e => e.ufid === idEstado || e.UFID === idEstado);
-        return estado ? (estado.ufsigla || estado.UFSIGLA) : '-';
+    // Callback para quando o cadastro for realizado com sucesso
+    const handleCadastroSucesso = () => {
+        api.get('Local').then(res => {
+            setListaLocais(res.data.$values || res.data);
+        });
     };
+
+    // Helpers de Formatação (Lookup de IDs para Nomes)
+    const getNomeCidade = (id) => {
+        if (!listaCidades.length || !id) return '...';
+        const item = listaCidades.find(c => (c.cidid || c.CIDID) === id);
+        return item ? (item.cidnome || item.CIDNOME) : '-';
+    };
+
+    const getSiglaEstado = (id) => {
+        if (!listaEstados.length || !id) return '';
+        const item = listaEstados.find(e => (e.ufid || e.UFID) === id);
+        return item ? (item.ufsigla || item.UFSIGLA) : '-';
+    };
+
+    const truncateText = (text, maxLength = 30) => {
+        if (!text) return '';
+        return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+    };
+
+
+    // --- RENDERIZAÇÃO ---
 
     if (isLoading) {
         return (
-            <div className="d-flex justify-content-center align-items-center" style={{ height: '50vh' }}>
+            <div className="d-flex justify-content-center align-items-center mt-5" style={{ minHeight: '200px' }}>
                 <div className="spinner-border text-primary" role="status">
                     <span className="visually-hidden">Carregando...</span>
                 </div>
@@ -63,9 +88,19 @@ function Home() {
 
     return (
         <div className="container mt-4 animate-fade-in">
+            {/* Cabeçalho da Página */}
             <div className="d-flex justify-content-between align-items-center mb-4">
-                <h2 className="fw-light text-primary fw-bold border-start border-5 border-primary ps-3">Pontos Turísticos</h2>
-                <span className="badge bg-secondary">{listaLocais.length} registros encontrados</span>
+                <h2 className="fw-light text-primary fw-bold border-start border-5 border-primary ps-3">
+                    Pontos Turísticos
+                </h2>                  
+                
+                <button 
+                    className="btn btn-primary d-flex align-items-center gap-2 shadow-sm"
+                    onClick={() => setShowModal(true)}
+                >
+                    <FontAwesomeIcon icon={faPlus} />
+                    <span className='fw-bold'>Novo Ponto Turístico</span>
+                </button>
             </div>
 
             <div className="card shadow-sm border-0">
@@ -89,37 +124,45 @@ function Home() {
                                             <td className="ps-4 fw-bold text-muted">
                                                 {item.locid || item.LOCID}
                                             </td>
-
-                                            <td>
+                                            
+                                            <td className="fw-semibold text-primary">
                                                 {item.locnome || item.LOCNOME}
                                             </td>
-
+                                            
                                             <td title={item.locdescricao || item.LOCDESCRICAO}>
-                                                {(item.locdescricao || item.LOCDESCRICAO || '').length > 30
-                                                    ? (item.locdescricao || item.LOCDESCRICAO).substring(0, 30) + '...'
-                                                    : (item.locdescricao || item.LOCDESCRICAO)}
+                                                {truncateText(item.locdescricao || item.LOCDESCRICAO)}
                                             </td>
-
-                                            <td>{item.locendereco || item.LOCENDERECO}</td>
-
+                                            
+                                            <td className="small text-secondary">
+                                                {item.locendereco || item.LOCENDERECO}
+                                            </td>
+                                            
                                             <td>
                                                 <span className="badge bg-info text-dark">
-                                                    {getNomeCidade(item.loccid || item.LOCCID)}
-                                                    {' - '}
+                                                    {getNomeCidade(item.loccid || item.LOCCID)} 
+                                                    {' - '} 
                                                     {getSiglaEstado(item.locuf || item.LOCUF)}
                                                 </span>
                                             </td>
 
                                             <td className="text-end pe-4">
-                                                <button className="btn btn-sm btn-outline-primary me-2" title="Editar"><FontAwesomeIcon icon={faPen} /></button>
-                                                <button className="btn btn-sm btn-outline-danger" title="Excluir"><FontAwesomeIcon icon={faTrash} /></button>
+                                                <button className="btn btn-sm btn-outline-primary me-2" title="Editar">
+                                                    <FontAwesomeIcon icon={faPen} />
+                                                </button>
+                                                <button className="btn btn-sm btn-outline-danger" title="Excluir">
+                                                    <FontAwesomeIcon icon={faTrash} />
+                                                </button>
                                             </td>
                                         </tr>
                                     ))
                                 ) : (
                                     <tr>
-                                        <td colSpan="6" className="text-center py-4 text-muted">
-                                            Nenhum registro encontrado
+                                        <td colSpan="6" className="text-center py-5 text-muted">
+                                            <div className="d-flex flex-column align-items-center">
+                                                <FontAwesomeIcon icon={faPlus} size="2x" className="mb-2 opacity-25" />
+                                                <span>Nenhum registro encontrado</span>
+                                                <small>Clique em "Novo Ponto Turístico" para começar.</small>
+                                            </div>
                                         </td>
                                     </tr>
                                 )}
@@ -128,6 +171,14 @@ function Home() {
                     </div>
                 </div>
             </div>
+
+            <AddLocations 
+                isOpen={showModal}
+                onClose={() => setShowModal(false)}
+                onSuccess={handleCadastroSucesso}
+                listaCidades={listaCidades}
+                listaEstados={listaEstados}
+            />
         </div>
     );
 }
