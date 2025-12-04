@@ -1,13 +1,20 @@
-import React, { useState, useEffect } from 'react';
-import api from '../../../service/Api';
+import { useState, useEffect } from 'react';
+import api, { apiEstadosIBGE, apiCidadesIBGE } from '../../../service/Api';
 import Modal from '../../modal';
-
 import Swal from 'sweetalert2';
 
-function AddLocations({ isOpen, onClose, onSuccess, listaEstados, listaCidades }) {
+const normalizarTexto = (texto) => {
+    if (!texto) return "";
+    return String(texto).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().trim();
+};
+
+function AddLocations({ isOpen, onClose, onSuccess }) {
 
     const [isSaving, setIsSaving] = useState(false);
-    
+    const [listaEstadosIBGE, setListaEstadosIBGE] = useState([]);
+    const [listaCidadesIBGE, setListaCidadesIBGE] = useState([]);
+    const [selectedEstadoIBGE, setSelectedEstadoIBGE] = useState(null);
+
     const initialFormState = {
         nome: '',
         descricao: '',
@@ -15,12 +22,21 @@ function AddLocations({ isOpen, onClose, onSuccess, listaEstados, listaCidades }
         ufId: '',
         cidadeId: ''
     };
-    
+
     const [formData, setFormData] = useState(initialFormState);
 
     useEffect(() => {
         if (isOpen) {
             setFormData(initialFormState);
+            setSelectedEstadoIBGE(null);
+            setListaCidadesIBGE([]);
+
+            apiEstadosIBGE()
+                .then(response => {
+                    const estadosOrdenados = response.data.sort((a, b) => a.nome.localeCompare(b.nome));
+                    setListaEstadosIBGE(estadosOrdenados);
+                })
+                .catch(err => console.error("Erro ao carregar IBGE:", err));
         }
     }, [isOpen]);
 
@@ -29,26 +45,129 @@ function AddLocations({ isOpen, onClose, onSuccess, listaEstados, listaCidades }
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
+    const handleEstadoChange = async (e) => {
+        const ibgeId = e.target.value;
+        const estadoSelecionado = listaEstadosIBGE.find(uf => uf.id === parseInt(ibgeId));
+        setSelectedEstadoIBGE(estadoSelecionado);
+
+        setFormData(prev => ({ ...prev, cidadeId: '' }));
+
+        if (estadoSelecionado) {
+            try {
+                const response = await apiCidadesIBGE(estadoSelecionado.id);
+                setListaCidadesIBGE(response.data);
+            } catch (error) {
+                console.error("Erro ao buscar cidades IBGE", error);
+            }
+        } else {
+            setListaCidadesIBGE([]);
+        }
+    };
+
+    const garantirEstadoNoBanco = async () => {
+        if (!selectedEstadoIBGE) return null;
+        try {
+            const responseLocais = await api.get('Estado');
+
+            let listaParaVerificar = [];
+            if (responseLocais.data && Array.isArray(responseLocais.data.$values)) {
+                listaParaVerificar = responseLocais.data.$values;
+            } else if (Array.isArray(responseLocais.data)) {
+                listaParaVerificar = responseLocais.data;
+            }
+
+            const estadoExistente = listaParaVerificar.find(e => {
+                const siglaBanco = e.UFSIGLA || e.ufsigla || "";
+                return normalizarTexto(siglaBanco) === normalizarTexto(selectedEstadoIBGE.sigla);
+            });
+
+            if (estadoExistente) {
+                return estadoExistente.ufid || estadoExistente.UFID;
+            } else {
+                const novoEstadoPayload = {
+                    UFNOME: selectedEstadoIBGE.nome,
+                    UFSIGLA: selectedEstadoIBGE.sigla,
+                    UFSITUACAO: 'A',
+                    UFDATACRIACAO: new Date().toISOString() 
+                };
+
+                const responseSave = await api.post('Estado', novoEstadoPayload);
+                return responseSave.data.ufid || responseSave.data.UFID;
+            }
+        } catch (error) {
+            console.error("Erro ao sincronizar estado:", error);
+            throw error;
+        }
+    };
+
+    const safeGet = (obj, key) => {
+        if (!obj) return undefined;
+        const keys = Object.keys(obj);
+        const match = keys.find(k => k.toLowerCase() === key.toLowerCase());
+        return match ? obj[match] : undefined;
+    };
+
+    const garantirCidadeNoBanco = async (ufIdBanco) => {
+        const cidadeSelecionadaIBGE = listaCidadesIBGE.find(c => c.id === parseInt(formData.cidadeId));
+        if (!cidadeSelecionadaIBGE) return null;
+        try {
+            const response = await api.get('Cidade/buscar-por-nome', {
+                params: {
+                    nome: cidadeSelecionadaIBGE.nome,
+                    ufId: ufIdBanco
+                }
+            });
+            const idEncontrado = safeGet(response.data, 'cidid');
+            return idEncontrado;
+
+        } catch (error) {
+            if (error.response && error.response.status === 404) {
+                const novaCidadePayload = {
+                    CIDNOME: cidadeSelecionadaIBGE.nome,
+                    CIDUF: parseInt(ufIdBanco),
+                    CIDSITUACAO: 'A', // Caixa alta aqui também
+                    CIDDATACRIACAO: new Date().toISOString()
+                };
+
+                try {
+                    const responseSave = await api.post('Cidade', novaCidadePayload);
+                    const idNovo = safeGet(responseSave.data, 'cidid');
+                    return idNovo;
+                } catch (errSave) {
+                    throw errSave;
+                }
+            } else {
+                throw error;
+            }
+        }
+    };
+
     const handleSave = async () => {
-        if (!formData.nome || !formData.cidadeId || !formData.ufId) {
+        if (!formData.nome || !formData.cidadeId || !selectedEstadoIBGE) {
             Swal.fire({
                 icon: 'warning',
                 title: 'Campos Obrigatórios',
                 text: 'Por favor, preencha o Nome, Estado e Cidade.',
-                confirmButtonColor: '#0d6efd' // Cor azul do bootstrap
+                confirmButtonColor: '#0d6efd'
             });
             return;
         }
 
         setIsSaving(true);
         try {
+            const ufIdLocal = await garantirEstadoNoBanco();
+            if (!ufIdLocal) throw new Error("Falha ao obter ID do Estado.");
+
+            const cidadeIdLocal = await garantirCidadeNoBanco(ufIdLocal);
+            if (!cidadeIdLocal) throw new Error("Falha ao obter ID da Cidade.");
+
             const payload = {
-                locnome: formData.nome,
-                locdescricao: formData.descricao,
-                locendereco: formData.endereco,
-                loccid: parseInt(formData.cidadeId),
-                locuf: parseInt(formData.ufId),
-                locsituacao: 'A'
+                LOCNOME: formData.nome,
+                LOCDESCRICAO: formData.descricao,
+                LOCENDERECO: formData.endereco,
+                LOCCID: parseInt(cidadeIdLocal),
+                LOCUF: parseInt(ufIdLocal),
+                LOCSITUACAO: 'A'
             };
 
             await api.post('Local', payload);
@@ -61,26 +180,21 @@ function AddLocations({ isOpen, onClose, onSuccess, listaEstados, listaCidades }
                 timer: 2500
             });
 
-            onSuccess(); 
+            onSuccess();
             onClose();
 
         } catch (error) {
             console.error("Erro ao salvar:", error);
-            
             Swal.fire({
                 icon: 'error',
                 title: 'Erro',
-                text: 'Não foi possível salvar o registro. Tente novamente.',
+                text: 'Ocorreu um erro ao salvar. Entre em contato com o Suporte.',
                 confirmButtonColor: '#dc3545'
             });
         } finally {
             setIsSaving(false);
         }
     };
-
-    const cidadesFiltradas = listaCidades.filter(c =>
-        !formData.ufId || c.ciduf === parseInt(formData.ufId) || c.CIDUF === parseInt(formData.ufId)
-    );
 
     return (
         <Modal
@@ -94,82 +208,63 @@ function AddLocations({ isOpen, onClose, onSuccess, listaEstados, listaCidades }
                         Cancelar
                     </button>
                     <button className="btn btn-primary" onClick={handleSave} disabled={isSaving}>
-                        {isSaving ? 'Salvando...' : 'Salvar Registro'}
+                        {isSaving ? 'Sincronizando...' : 'Salvar Registro'}
                     </button>
                 </>
             }
         >
             <form>
-                <div className="mb-3">
+                <div className="mb-3 fw-bold">
                     <label className="form-label">Nome do Local <span className="text-danger">*</span></label>
-                    <input
-                        type="text"
-                        className="form-control"
-                        name="nome"
-                        value={formData.nome}
-                        onChange={handleInputChange}
-                        placeholder="Ex: Cristo Redentor"
-                    />
+                    <input type="text" className="form-control" name="nome" value={formData.nome} onChange={handleInputChange} maxLength="50" />
+                    <div className="text-end text-muted" style={{ fontSize: '0.8em' }}>
+                        {formData.nome.length}/50
+                    </div>
                 </div>
-
-                <div className="mb-3">
+                <div className="mb-3 fw-bold">
                     <label className="form-label">Descrição</label>
-                    <textarea
-                        className="form-control"
-                        rows="3"
-                        name="descricao"
-                        value={formData.descricao}
-                        onChange={handleInputChange}
-                        placeholder="Ex: Ponto turístico famoso no Rio de Janeiro"
-                    ></textarea>
+                    <textarea className="form-control" rows="3" name="descricao" value={formData.descricao} onChange={handleInputChange} maxLength="100"></textarea>
+                    <div className="text-end text-muted" style={{ fontSize: '0.8em' }}>
+                        {formData.descricao.length}/100
+                    </div>
                 </div>
-
-                <div className="mb-3">
+                <div className="mb-3 fw-bold">
                     <label className="form-label">Endereço</label>
-                    <input
-                        type="text"
-                        className="form-control"
-                        name="endereco"
-                        value={formData.endereco}
-                        onChange={handleInputChange}
-                        placeholder="Ex: Parque Nacional da Tijuca, Rio de Janeiro - RJ"
-                    />
+                    <input type="text" className="form-control" name="endereco" value={formData.endereco} onChange={handleInputChange} maxLength="50" />
+                    <div className="text-end text-muted" style={{ fontSize: '0.8em' }}>
+                        {formData.endereco.length}/50
+                    </div>
                 </div>
 
                 <div className="row">
                     <div className="col-md-6 mb-3">
-                        <label className="form-label">Estado <span className="text-danger">*</span></label>
+                        <label className="form-label fw-bold">Estado <span className="text-danger">*</span></label>
                         <select
                             className="form-select"
-                            name="ufId"
-                            value={formData.ufId}
-                            onChange={handleInputChange}
+                            value={selectedEstadoIBGE ? selectedEstadoIBGE.id : ''}
+                            onChange={handleEstadoChange}
                         >
                             <option value="">Selecione...</option>
-                            {listaEstados.map(uf => (
-                                <option key={uf.ufid || uf.UFID} value={uf.ufid || uf.UFID}>
-                                    {uf.ufnome || uf.UFNOME}
-                                </option>
+                            {listaEstadosIBGE.map(uf => (
+                                <option key={uf.id} value={uf.id}>{uf.nome} ({uf.sigla})</option>
                             ))}
                         </select>
                     </div>
 
-                    <div className="col-md-6 mb-3">
+                    <div className="col-md-6 mb-3 fw-bold">
                         <label className="form-label">Cidade <span className="text-danger">*</span></label>
                         <select
                             className="form-select"
                             name="cidadeId"
                             value={formData.cidadeId}
                             onChange={handleInputChange}
-                            disabled={!formData.ufId}
+                            disabled={!selectedEstadoIBGE}
                         >
                             <option value="">
-                                {!formData.ufId ? 'Selecione um Estado primeiro' : 'Selecione a Cidade...'}
+                                {!selectedEstadoIBGE ? 'Selecione um Estado primeiro' : 'Selecione a Cidade...'}
                             </option>
-                            {cidadesFiltradas.map(cid => (
-                                <option key={cid.cidid || cid.CIDID} value={cid.cidid || cid.CIDID}>
-                                    {cid.cidnome || cid.CIDNOME}
-                                </option>
+                            {listaCidadesIBGE.map(cid => (
+                                <option key={cid.id} value={cid.id}>{cid.nome}</option>
                             ))}
                         </select>
                     </div>
