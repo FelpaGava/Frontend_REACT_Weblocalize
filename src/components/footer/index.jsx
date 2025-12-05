@@ -13,10 +13,10 @@ function Footer() {
                     </div>
 
                     <div>
-                        <a href="https://www.linkedin.com" target="_blank" rel="noopener noreferrer" className="text-white text-decoration-none">
+                        <a href="https://www.linkedin.com/in/marcos-felipe-gava-093910263" target="_blank" rel="noopener noreferrer" className="text-white text-decoration-none">
                             <FontAwesomeIcon icon={faLinkedin} size="2xl" title="Visite meu LinkedIn" />
                         </a>
-                        <a href="https://www.linkedin.com" target="_blank" rel="noopener noreferrer" className="text-white text-decoration-none">
+                        <a href="https://github.com/FelpaGava" target="_blank" rel="noopener noreferrer" className="text-white text-decoration-none">
                             <FontAwesomeIcon icon={faGithub} size="2xl" title="Visite meu GitHub" />
                         </a>
                     </div>

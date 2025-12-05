@@ -19,7 +19,9 @@ const Content = ({
   const itemsPerPage = 5;
 
   useEffect(() => {
-    setFilteredItems(currentItems);
+
+    const sortedItems = [...currentItems].sort((a, b) => b.locid - a.locid);
+    setFilteredItems(sortedItems);
     setCurrentPage(1);
   }, [currentItems]);
 

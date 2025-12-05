@@ -4,7 +4,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faMapMarkerAlt } from '@fortawesome/free-solid-svg-icons';
 
 import AddLocations from '../../components/forms/addLocations';
-import Content from '../../components/content';
+import Content from '../../context/content';
 import AppContext from '../../context/AppContext';
 
 function Home() {
@@ -12,14 +12,11 @@ function Home() {
     listaLocais,
     listaCidades,
     listaEstados,
-    isLoading,
     carregarDados,
   } = useContext(AppContext);
 
   const [showModal, setShowModal] = useState(false);
   const [expandedId, setExpandedId] = useState(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5; // Ensure only 5 items per page
 
   useEffect(() => {
     carregarDados();
@@ -42,7 +39,7 @@ function Home() {
   };
 
   const toggleDetails = (id) => {
-    setExpandedId((prevId) => (prevId === id ? null : id)); // Alternar o item expandido sem alterar a página atual
+    setExpandedId((prevId) => (prevId === id ? null : id)); 
   };
 
   return (

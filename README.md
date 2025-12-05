@@ -1,16 +1,64 @@
-# React + Vite
+# Frontend React - WebLocalize
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Tecnologias Utilizadas
 
-Currently, two official plugins are available:
+Este projeto foi desenvolvido utilizando as seguintes tecnologias:
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **React**: Biblioteca JavaScript para construção de interfaces de usuário.
+- **Vite**: Ferramenta de build rápida para desenvolvimento de aplicações modernas.
+- **Bootstrap**: Framework CSS para estilização responsiva.
+- **FontAwesome**: Biblioteca de ícones para React.
+- **Axios**: Cliente HTTP para realizar requisições à API.
+- **React Router DOM**: Gerenciamento de rotas na aplicação React.
+- **SweetAlert2**: Biblioteca para exibição de alertas estilizados.
 
-## React Compiler
+## Passo a Passo para Executar o Projeto
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Siga as etapas abaixo para executar o projeto localmente:
 
-## Expanding the ESLint configuration
+1. **Clone o repositório**:
+   ```bash
+   git clone https://github.com/FelpaGava/Frontend_REACT_Weblocalize.git
+   ```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+2. **Acesse o diretório do projeto**:
+   ```bash
+   cd Frontend_REACT_Weblocalize/Frontend_REACT_Weblocalize/Frontend_REACT_Weblocalize
+   ```
+
+3. **Instale as dependências**:
+   Certifique-se de que você possui o Node.js instalado. Em seguida, execute:
+   ```bash
+   npm install
+   ```
+
+4. **Inicie o servidor de desenvolvimento**:
+   ```bash
+   npm run dev
+   ```
+
+5. **Acesse a aplicação**:
+   Abra o navegador e acesse:
+   ```
+   http://localhost:5173
+   ```
+---
+
+## Estrutura do Projeto
+
+A estrutura principal do projeto é a seguinte:
+
+```
+public/         # Arquivos estáticos
+src/            # Código-fonte principal
+  assets/       # Recursos estáticos (imagens, etc.)
+  components/   # Componentes reutilizáveis
+  pages/        # Páginas da aplicação
+  service/      # Serviços (ex.: integração com API)
+```
+
+---
+
+## Contato
+
+Para dúvidas ou sugestões, entre em contato pelo [LinkedIn](www.linkedin.com/in/marcos-felipe-gava-093910263) ou [GitHub](https://github.com/FelpaGava).
