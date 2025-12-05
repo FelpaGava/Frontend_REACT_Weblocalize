@@ -125,7 +125,7 @@ function AddLocations({ isOpen, onClose, onSuccess }) {
                 const novaCidadePayload = {
                     CIDNOME: cidadeSelecionadaIBGE.nome,
                     CIDUF: parseInt(ufIdBanco),
-                    CIDSITUACAO: 'A', // Caixa alta aqui também
+                    CIDSITUACAO: 'A', 
                     CIDDATACRIACAO: new Date().toISOString()
                 };
 
@@ -162,12 +162,12 @@ function AddLocations({ isOpen, onClose, onSuccess }) {
             if (!cidadeIdLocal) throw new Error("Falha ao obter ID da Cidade.");
 
             const payload = {
-                LOCNOME: formData.nome,
-                LOCDESCRICAO: formData.descricao,
-                LOCENDERECO: formData.endereco,
-                LOCCID: parseInt(cidadeIdLocal),
-                LOCUF: parseInt(ufIdLocal),
-                LOCSITUACAO: 'A'
+                locnome: formData.nome,
+                locdescricao: formData.descricao,
+                locendereco: formData.endereco,
+                loccid: parseInt(cidadeIdLocal),
+                locuf: parseInt(ufIdLocal),
+                locsituacao: 'A'
             };
 
             await api.post('Local', payload);

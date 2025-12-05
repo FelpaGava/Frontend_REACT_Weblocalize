@@ -1,45 +1,38 @@
-/* 1. Backdrop (O fundo escuro) 
-   Substitui o style={{ backgroundColor: ... }} inline 
-*/
 .backdrop {
     background-color: rgba(0, 0, 0, 0.6);
-    backdrop-filter: blur(3px); /* Efeito moderno de desfoque no fundo */
+    backdrop-filter: blur(3px);
     transition: opacity 0.3s ease-in-out;
 }
 
-/* 2. Customização do Container do Modal */
 .modalContent {
-    border: none; /* Remove borda padrão do Bootstrap */
-    border-radius: 12px; /* Cantos mais arredondados */
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); /* Sombra mais elegante */
-    overflow: hidden; /* Garante que o header não vase nas bordas arredondadas */
+    border: none;
+    border-radius: 12px; 
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    overflow: hidden; 
     
-    /* Animação de entrada */
     animation: slideIn 0.3s ease-out;
 }
 
-/* 3. Variantes de Cabeçalho (Situações Diferentes) */
 .headerPrimary {
-    background-color: #0d6efd; /* Azul Bootstrap */
+    background-color: #0d6efd; 
     color: white;
 }
 
 .headerDanger {
-    background-color: #dc3545; /* Vermelho Bootstrap */
+    background-color: #dc3545;
     color: white;
 }
 
 .headerSuccess {
-    background-color: #198754; /* Verde Bootstrap */
+    background-color: #198754;
     color: white;
 }
 
 .headerWarning {
-    background-color: #ffc107; /* Amarelo Bootstrap */
+    background-color: #ffc107;
     color: #000;
 }
 
-/* 4. Animação Keyframes */
 @keyframes slideIn {
     from {
         opacity: 0;
@@ -51,7 +44,6 @@
     }
 }
 
-/* Ajuste no botão de fechar para ele ficar branco ou preto dependendo do fundo */
 .closeButtonWhite {
     filter: invert(1) grayscale(100%) brightness(200%);
 }

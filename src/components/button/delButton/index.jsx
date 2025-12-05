@@ -8,7 +8,7 @@ function DelButton({ item, onSuccess }) {
     const [isDeleting, setIsDeleting] = useState(false);
 
     const handleInactivate = async (e) => {
-        e.stopPropagation(); // Impede que o card abra/feche ao clicar no botão
+        e.stopPropagation();
 
         const result = await Swal.fire({
             title: 'Tem certeza?',
@@ -21,46 +21,31 @@ function DelButton({ item, onSuccess }) {
             cancelButtonText: 'Cancelar'
         });
 
-        if (result.isConfirmed) {
-            setIsDeleting(true);
-            try {
-                const id = item.locid || item.LOCID;
-                
-                // Regra de Negócio: Inativar (LOCSITUACAO = 'I')
-                // Clonamos o item e forçamos a situação para 'I'
-                const payload = {
-                    ...item,
-                    LOCSITUACAO: 'I',
-                    LocSituacao: 'I', // Garantindo Case Sensitivity do C#
-                    // Se sua API for estrita, certifique-se de que os campos numéricos estão como números
-                    LOCID: id, 
-                    LocId: id 
-                };
+        if (!result.isConfirmed) return;
 
-                // Enviando PUT para atualizar. 
-                // Nota: Ajuste a rota ('Local' ou 'Local/${id}') conforme sua API .NET espera.
-                // Geralmente para update se usa PUT na rota com ID ou na raiz com o corpo completo.
-                await api.put(`Local/${id}`, payload);
+        setIsDeleting(true);
+        try {
+            const id = item.locid;
 
-                Swal.fire(
-                    'Inativado!',
-                    'O registro foi inativado com sucesso.',
-                    'success'
-                );
+            await api.put(`local/${id}/desativar`);
 
-                // Atualiza a lista na tela Home
-                if (onSuccess) onSuccess();
+            Swal.fire(
+                'Inativado!',
+                'O registro foi INATIVADO com sucesso.',
+                'success'
+            );
 
-            } catch (error) {
-                console.error('Erro ao inativar:', error);
-                Swal.fire(
-                    'Erro!',
-                    'Ocorreu um erro ao tentar inativar o registro.',
-                    'error'
-                );
-            } finally {
-                setIsDeleting(false);
-            }
+            if (onSuccess) onSuccess();
+
+        } catch (error) {
+            console.error('Erro ao inativar:', error);
+            Swal.fire(
+                'Erro!',
+                'Ocorreu um erro ao tentar inativar o registro.',
+                'error'
+            );
+        } finally {
+            setIsDeleting(false);
         }
     };
 
